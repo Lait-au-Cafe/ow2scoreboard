@@ -1,0 +1,194 @@
+.container {
+    --tank-color: rgb(216, 197, 22);
+    --dps-color: tomato;
+    --support-color: limegreen;
+}
+
+.container {
+    display: flex;
+    min-width: 550px;
+    height: 100%;
+    flex-direction: column;
+}
+
+.role-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 5px;
+}
+
+.role-menu li {
+    flex: 1;
+    position: relative;
+}
+
+.role-menu li a {
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
+    color: white;
+    font-family: 'Sawarabi Gothic', sans-serif;
+    font-size: 32px;
+    padding: 2px;
+    border-radius: 15px 15px 0 0;
+    border-bottom: none;
+}
+#menu-tank { background-color: var(--tank-color); }
+#menu-dps { background-color: var(--dps-color); }
+#menu-support { background-color: var(--support-color); }
+
+.role-menu li input {
+    position: absolute;
+    top: 18px;
+    left: 8px;
+    transform: scale(2);
+}
+
+.control-panel {
+    display: none;
+    flex: 1;
+    box-sizing: border-box;
+    border: solid 10px;
+    background-color: #eee;
+    flex-direction: column;
+}
+.control-panel.active { display: flex; }
+#tank { border-color: var(--tank-color); }
+#dps { border-color: var(--dps-color); }
+#support { border-color: var(--support-color); }
+
+
+.control-panel .rank {
+    display: flex;
+}
+
+.control-panel .rank .rank-preview {
+    width: 200px;
+    height: 200px;
+    min-width: 200px;
+    position: relative;
+    border: groove 5px;
+    margin: 10px;
+    background: radial-gradient(#eee, #333);
+    overflow: hidden;
+}
+
+.control-panel .rank .rank-preview img {
+    width: 300px;
+    position: absolute;
+    top: 0; left: 0;
+    transform: translate(-50%, -50%) translate(100px, 100px);
+    visibility: hidden;
+}
+.control-panel .rank .rank-preview img.active {
+    visibility: visible;
+}
+
+.control-panel .rank .rank-quick-actions {
+    display: flex;
+    gap: 10px;
+    margin: 10px;
+}
+
+.control-panel .rank .rank-quick-actions button {
+    flex: 1;
+    line-height: 0.8em;
+    font-size: 28px;
+    background-color: white;
+    border: groove 3px;
+    cursor: pointer;
+}
+
+.control-panel .rank .rank-control {
+    flex: 1;
+    margin: 10px;
+}
+
+.control-panel .rank .rank-control fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background-color: white;
+    border: groove 3px;
+}
+
+.control-panel .rank .rank-control fieldset + fieldset {
+    margin-top: 15px;
+}
+
+.control-panel .rank .rank-control legend {
+    background-color: white;
+    border: solid 1px;
+    padding-inline: 10px;
+}
+
+.control-panel .rank .rank-control div, 
+.control-panel .rank .rank-control div * {
+    cursor: pointer;
+}
+
+
+.control-panel .score {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+}
+
+.control-panel .score .score-quick-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.control-panel .score .score-quick-actions button {
+    flex: 1;
+    font-size: 28px;
+    background-color: white;
+    border: solid 3px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.control-panel .score .score-quick-actions button.score-quick-win-btn { border-color: red; }
+.control-panel .score .score-quick-actions button.score-quick-lose-btn { border-color: blue; }
+.control-panel .score .score-quick-actions button.score-quick-draw-btn { border-color: orange; }
+
+.control-panel .score .score-quick-actions-footer {
+    margin: 8px 0;
+    text-align: end;
+}
+
+.control-panel .score .score-control {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 32px;
+}
+
+.control-panel .score .score-control input[type=number] {
+    width: 3ch;
+    margin-left: 5px;
+    font-size: 32px;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button {  
+   opacity: 1;
+}
+
+.control-panel .score .score-footer {
+    margin-top: auto;
+}
+
+.control-panel .score .score-footer .score-clear-all-btn {
+    font-size: 1em;
+    margin: 0 0.5ch;
+    padding: 0.2ch 1ch;
+    border-radius: 0;
+    background-color: white;
+    border: solid 2px;
+    cursor: pointer;
+}
