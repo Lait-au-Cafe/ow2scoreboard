@@ -204,7 +204,14 @@ export default {
     }, 
     date_formatter: function(date) {
       if(!date) { return "" }
-      return `${date.getFullYear()}/${date.getMonth()}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+
+      const year = date.getFullYear()
+      const month = ("00" + date.getMonth()).slice(-2)
+      const day = ("00" + date.getDate()).slice(-2)
+      const hours = ("00" + date.getHours()).slice(-2)
+      const minutes = ("00" + date.getMinutes()).slice(-2)
+      const seconds = ("00" + date.getSeconds()).slice(-2)
+      return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
     }
   }, 
   watch: {
@@ -220,8 +227,9 @@ export default {
     (async () => {
       const retrieved_score = await window.electronAPI.retrieve_score()
       if(retrieved_score) {
-        for(const role of retrieved_score) {
-          role.score.last_updated = Date.parse(role.score.last_updated)
+        for(let i = 0; i < retrieved_score.length; i++) {
+          const date = retrieved_score[i].score.last_updated
+          if(date) { retrieved_score[i].score.last_updated = new Date(date) }
         }
         this.roles = retrieved_score
       }
