@@ -1,7 +1,16 @@
 'use strict'
 
+import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
+import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
+const isDevelopment = process.env.NODE_ENV !== 'production'
+const path = require('path')
+
+let cache_dir_path;
+if(process.env.WEBPACK_DEV_SERVER_URL) { cache_dir_path = `${__dirname}/.cache` }
+else { cache_dir_path = `${app.getPath('userData')}/.cache` }
+
 const fs = require('fs')
-const cache_dir_path = `${__dirname}/.cache`
 const score_cache_filename = "score.json"
 async function retrieve_score() {
   try {
@@ -12,12 +21,6 @@ async function retrieve_score() {
     return undefined
   }
 }
-
-import { app, protocol, BrowserWindow, ipcMain } from 'electron'
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
-const isDevelopment = process.env.NODE_ENV !== 'production'
-const path = require('path')
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
