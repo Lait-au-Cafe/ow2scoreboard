@@ -18,7 +18,7 @@
 
                     if(!score_data[index].is_visible) { row.addClass('hidden') }
                     else { row.removeClass('hidden') }
-                    badge.attr('src', `../img/rank_badge/${score_data[index].rank.current_tier}/${score_data[index].rank.current_division}.png`)
+                    badge.attr('src', `../assets/rank_badge/${score_data[index].rank.current_tier}/${score_data[index].rank.current_division}.png`)
                     win.text(score_data[index].score.wins)
                     loss.text(score_data[index].score.losses)
                     draw.text(score_data[index].score.draws)

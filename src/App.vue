@@ -138,7 +138,7 @@ export default {
   }, 
   methods: {
     image_path_builder: function(tier, division) {
-      return require(`../img/rank_badge/${tier}/${division}.png`)
+      return require(`../assets/rank_badge/${tier}/${division}.png`)
     },
     switch_tab: function(role) {
       this.selected_role = role

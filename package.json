@@ -1,7 +1,7 @@
 {
   "name": "ow2scoreboard",
   "version": "1.0.0",
-  "author": "Lait-au-Cafe", 
+  "author": "Lait-au-Cafe",
   "description": "Scoreboard overlay for Overwatch2. ",
   "private": true,
   "scripts": {
