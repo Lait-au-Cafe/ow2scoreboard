@@ -1,3 +1,45 @@
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* height: 100px; */
+    background-color: rgba(255, 255, 255, 0.90);
+    z-index: 1000;
+    padding: 10px;
+    padding-right: 40px;
+    display: none;
+}
+
+#overlay.show {
+    display: block;
+}
+
+#overlay .close {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    text-align: center;
+    cursor: pointer;
+}
+
+#overlay .close span {
+    line-height: 32px;
+}
+
+#overlay .log {
+    height: 100%;
+    overflow-x: wrap;
+    overflow-y: scroll;
+}
+
+#overlay .log p {
+    margin: 5px;
+}
+
 .container {
     --tank-color: rgb(216, 197, 22);
     --dps-color: tomato;

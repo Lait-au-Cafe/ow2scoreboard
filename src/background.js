@@ -11,6 +11,22 @@ if(process.env.WEBPACK_DEV_SERVER_URL) { cache_dir_path = `${__dirname}/.cache` 
 else { cache_dir_path = `${app.getPath('userData')}/.cache` }
 
 const fs = require('fs')
+const log_filename = "log.txt"
+function log(msg, type) {
+  const current_time = new Date()
+  const year = current_time.getFullYear()
+  const month = ("00" + current_time.getMonth()).slice(-2)
+  const day = ("00" + current_time.getDate()).slice(-2)
+  const hours = ("00" + current_time.getHours()).slice(-2)
+  const minutes = ("00" + current_time.getMinutes()).slice(-2)
+  const seconds = ("00" + current_time.getSeconds()).slice(-2)
+  const formatted_date = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
+
+  const line = `[${formatted_date}][${type}] ${msg}\n`
+  fs.appendFileSync(`${cache_dir_path}/${log_filename}`, line)
+}
+fs.writeFileSync(`${cache_dir_path}/${log_filename}`, "")
+
 const score_cache_filename = "score.json"
 async function retrieve_score() {
   try {
@@ -18,6 +34,7 @@ async function retrieve_score() {
   }
   catch(err) {
     console.log("Cache file not found. ")
+    log("Cache file not found. ", 'INFO')
     return undefined
   }
 }
@@ -62,6 +79,7 @@ app.on('window-all-closed', () => {
     const score_data_str = JSON.stringify(score_data)
     fs.writeFileSync(`${cache_dir_path}/${score_cache_filename}`, score_data_str ? score_data_str : "")
     console.log(`Cache saved at ${cache_dir_path}/${score_cache_filename}. `)
+    log(`Cache saved at ${cache_dir_path}/${score_cache_filename}. `, 'INFO')
   }
 
   // On macOS it is common for applications and their menu bar
@@ -134,4 +152,5 @@ express_app.post('/api/set_score', (req, res) => {
 
 express_app.listen(3000, () => {
   console.log("Listening on port 3000. ")
+  log("Listening on port 3000. ", 'INFO')
 });

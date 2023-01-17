@@ -1,4 +1,8 @@
 <template>
+  <div id="overlay">
+    <div class="close"><span class="material-icons-outlined">close</span></div>
+    <div class="log"></div>
+  </div>
   <div class="container">
     <ul class="role-menu">
       <li>
@@ -92,6 +96,10 @@ function update_score(score) {
       }, 
       body: JSON.stringify(score)
     }).catch(e => {
+      const line = document.createElement('p')
+      line.innerText = `Error occured while updating score data. ${e}`
+      document.querySelector('#overlay .log').appendChild(line)
+      document.querySelector('#overlay').classList.add('show')
       console.error(`Error occured while updating score data. : ${e}`)
     })
   })();
@@ -224,6 +232,13 @@ export default {
     }
   }, 
   mounted: function() {
+    // Set EventListenrs
+    const overlay_close_btn = document.querySelector('#overlay .close');
+    overlay_close_btn.addEventListener('click', () => {
+      document.querySelector('#overlay').classList.remove('show');
+    });
+
+    // Retrieve scores. 
     (async () => {
       const retrieved_score = await window.electronAPI.retrieve_score()
       if(retrieved_score) {
