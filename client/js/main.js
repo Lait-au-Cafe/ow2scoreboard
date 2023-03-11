@@ -1,8 +1,9 @@
 'use strict'
 
 {
+    console.log(window.navigator.userAgent);
+
     setInterval(() => {
-        console.log("Flip")
         $('.badge').each((index, elem) => {
             $(elem).toggleClass('flipped');
         });
