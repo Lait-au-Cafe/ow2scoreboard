@@ -56,24 +56,29 @@
           <button class="score-quick-lose-btn" @click="add_loss(role)" :disabled="score_buttons_cooldown">Lose</button>
           <button class="score-quick-draw-btn" @click="add_draw(role)" :disabled="score_buttons_cooldown">Draw</button>
         </section>
+        <section class="score-quick-actions">
+          <button class="score-quick-qualify-btn" @click="add_score(role)" :disabled="role.score.win_loss_draws.length <= 1 && (role.score.win_loss_draws[0][0] + role.score.win_loss_draws[0][1] + role.score.win_loss_draws[0][2] <= 0)">{{ `${(role.score.win_loss_draws[0][0] + role.score.win_loss_draws[0][1] + role.score.win_loss_draws[0][2] > 0) ? "" : "Undo "}Qualify` }}</button>
+        </section>
         <section class="score-quick-actions-footer">
           <span class="score-update-log">Last Updated: {{date_formatter(role.score.last_updated)}}</span>
         </section>
         <section class="score-control">
-          <span>
-            <label for="score-win">Win</label><!--
-            --><input type="number" class="score-win" name="score-win" min="0" @input="update_date(role)" v-model="role.score.wins">
-          </span>
-          -
-          <span>
-            <label for="score-loss">Loss</label><!--
-            --><input type="number" class="score-loss" name="score-loss" min="0" @input="update_date(role)" v-model="role.score.losses">
-          </span>
-          -
-          <span>
-            <label for="score-draw">Draw</label><!--
-            --><input type="number" class="score-draw" name="score-draw" min="0" @input="update_date(role)" v-model="role.score.draws">
-          </span>
+          <section v-for="win_loss_draw in role.score.win_loss_draws" :key="win_loss_draw">
+            <span>
+              <label for="score-win">Win</label><!--
+              --><input type="number" class="score-win" name="score-win" min="0" @input="update_date(role)" v-model="win_loss_draw[0]">
+            </span>
+            -
+            <span>
+              <label for="score-loss">Loss</label><!--
+              --><input type="number" class="score-loss" name="score-loss" min="0" @input="update_date(role)" v-model="win_loss_draw[1]">
+            </span>
+            -
+            <span>
+              <label for="score-draw">Draw</label><!--
+              --><input type="number" class="score-draw" name="score-draw" min="0" @input="update_date(role)" v-model="win_loss_draw[2]">
+            </span>
+          </section>
         </section>
         <section class="score-footer">
           <button class="score-clear-all-btn" @click="clear_score(role)">{{`Clear ${role.name}'s score`}}</button>
@@ -116,9 +121,7 @@ function initialize_score() {
         current_division: 5
       }, 
       score: {
-        wins: 0, 
-        losses: 0, 
-        draws: 0, 
+        win_loss_draws: [[0, 0, 0]], 
         last_updated: undefined
       }
     })
@@ -185,27 +188,32 @@ export default {
     }, 
     add_win: function(role) {
       this.score_buttons_cooldown = true
-      role.score.wins += 1
+      role.score.win_loss_draws[0][0] += 1
       this.update_date(role)
       setTimeout(() => { this.score_buttons_cooldown = false }, 500)
     }, 
     add_loss: function(role) {
       this.score_buttons_cooldown = true
-      role.score.losses += 1
+      role.score.win_loss_draws[0][1] += 1
       this.update_date(role)
       setTimeout(() => { this.score_buttons_cooldown = false }, 500)
     }, 
     add_draw: function(role) {
       this.score_buttons_cooldown = true
-      role.score.draws += 1
+      role.score.win_loss_draws[0][2] += 1
       this.update_date(role)
       setTimeout(() => { this.score_buttons_cooldown = false }, 500)
     }, 
+    add_score: function(role) {
+      const is_qualify = role.score.win_loss_draws[0][0]+role.score.win_loss_draws[0][1]+role.score.win_loss_draws[0][2] > 0;
+      role.score.win_loss_draws = role.score.win_loss_draws.filter(score => score[0]+score[1]+score[2]>0)
+      if(is_qualify) {
+        role.score.win_loss_draws.unshift([0, 0, 0])
+      }
+    }, 
     clear_score: function(role) {
       if(!confirm(`Are you sure you want to clear the score of ${role.name}?`)) { return }
-      role.score.wins = 0
-      role.score.losses = 0
-      role.score.draws = 0
+      role.score.win_loss_draws = [[0, 0, 0]]
     }, 
     update_date(role) {
       role.score.last_updated = new Date()
@@ -241,13 +249,7 @@ export default {
     // Retrieve scores. 
     (async () => {
       const retrieved_score = await window.electronAPI.retrieve_score()
-      if(retrieved_score) {
-        for(let i = 0; i < retrieved_score.length; i++) {
-          const date = retrieved_score[i].score.last_updated
-          if(date) { retrieved_score[i].score.last_updated = new Date(date) }
-        }
-        this.roles = retrieved_score
-      }
+      if(retrieved_score) { this.roles = retrieved_score }
     })();
   }
 }
