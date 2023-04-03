@@ -93,6 +93,7 @@ body {
     font-weight: bold;
     text-align: center;
     position: absolute;
+    transition: opacity 1s;
 }
 
 .scoreboard td.score .data {
