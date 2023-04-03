@@ -47,28 +47,54 @@
 }
 
 .container {
-    display: flex;
-    min-width: 550px;
+    min-width: 575px;
     height: 100%;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 54px;
+    grid-template-rows: 54px 1fr;
+    grid-template-areas:
+        "tab        setting"
+        "control    control";
+}
+
+.setting {
+    grid-area: setting;
+    width: 54px;
+    height: 54px;
+    line-height: 54px;
+    text-align: center;
+    padding: 0;
+    border: none;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.setting span {
+    line-height: 54px;
+    font-size: 45px;
+    color: #999;
+    cursor: pointer;
 }
 
 .role-menu {
+    grid-area: tab;
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
+    height: 54px;
     gap: 5px;
 }
 
 .role-menu li {
     flex: 1;
     position: relative;
+    height: 100%;
 }
 
 .role-menu li a {
     display: inline-block;
     width: 100%;
+    height: 100%;
     box-sizing: border-box;
     text-align: center;
     text-decoration: none;
@@ -91,6 +117,7 @@
 }
 
 .control-panel {
+    grid-area: control;
     display: none;
     flex: 1;
     box-sizing: border-box;

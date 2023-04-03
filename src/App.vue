@@ -18,6 +18,7 @@
         <a href="#" id="menu-support" @click="switch_tab('support')">Support</a>
       </li>
     </ul>
+    <button class="setting"><span class="material-icons">settings</span></button>
     <section v-for="role in roles" class="control-panel" :id="role.name" :key="role.name" :class="{ active: role.name === selected_role }">
       <section class="rank">
         <div>
