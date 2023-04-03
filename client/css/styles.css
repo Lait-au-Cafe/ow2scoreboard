@@ -79,19 +79,44 @@ body {
 
 .scoreboard td.score {
     flex: 1;
+    display: block;
     font-family: 'Share Tech Mono', monospace;
     font-size: 33vh;
-    justify-content: center;
-    padding-inline: 0.5ch;
     margin-left: 0.2ch;
     border-inline-start: solid black 0.15ch;
 }
+
+.scoreboard td.score .mode {
+    writing-mode: vertical-lr;
+    height: 33vh;
+    font-size: 8vh;
+    font-weight: bold;
+    text-align: center;
+    position: absolute;
+    transition: opacity 1s;
+}
+
+.scoreboard td.score .data {
+    display: flex;
+    justify-content: center;
+    width: calc(100vw - 40vh - 40vh);
+    height: 33vh;
+    padding-left: calc(0.5ch - 10vh);
+    padding-right: 0.5ch;
+    position: absolute;
+    transition: opacity 1s;
+}
+
+.scoreboard td.score.flipped .latest { opacity: 0; }
+.scoreboard td.score .total { opacity: 0; }
+.scoreboard td.score.flipped .total { opacity: 1; }
 
 /*aspect-ratio is not supported in CEF which is used in BOS Browser Source...*/
 /*@media (min-aspect-ratio: 18) {*/
 @media (max-height: 100px) {
     .scoreboard tbody {
         flex-direction: row;
+        justify-content: center;
     }
 
     .scoreboard tr {
@@ -121,5 +146,16 @@ body {
     
     .scoreboard td.score {
         font-size: 100vh;
+    }
+
+    .scoreboard td.score .mode {
+        height: 100vh;
+        font-size: 24vh;
+    }
+
+    .scoreboard td.score .data {
+        width: calc(33.3vw - 120vh - 120vh);
+        height: 100vh;
+        padding-left: calc(0.5ch - 30vh);
     }
 }

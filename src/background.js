@@ -1,16 +1,21 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import { app, protocol, Menu, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const fs = require('fs')
 const path = require('path')
 
 let cache_dir_path;
 if(process.env.WEBPACK_DEV_SERVER_URL) { cache_dir_path = `${__dirname}/.cache` }
 else { cache_dir_path = `${app.getPath('userData')}/.cache` }
+try { fs.mkdirSync(cache_dir_path) }
+catch(err) {
+  if(err.code === 'EEXIST') { console.log("Cache directory exests. ") }
+  else { console.log(err) }
+}
 
-const fs = require('fs')
 const log_filename = "log.txt"
 function log(msg, type) {
   const current_time = new Date()
@@ -27,16 +32,33 @@ function log(msg, type) {
 }
 fs.writeFileSync(`${cache_dir_path}/${log_filename}`, "")
 
-const score_cache_filename = "score.json"
+const cache_filename = "cache.json"
 async function retrieve_score() {
+  let cache_data = {}
   try {
-    return JSON.parse(fs.readFileSync(`${cache_dir_path}/${score_cache_filename}`, 'utf8'))
+    cache_data = JSON.parse(fs.readFileSync(`${cache_dir_path}/${cache_filename}`, 'utf8'))
+    console.log(`Cache file found: ${cache_dir_path}/${cache_filename}. `)
+    log("Cache file found: ${cache_dir_path}/${cache_filename}. ", 'INFO')
   }
   catch(err) {
     console.log("Cache file not found. ")
     log("Cache file not found. ", 'INFO')
     return undefined
   }
+
+  let retrieved_score = cache_data['scores']
+
+  // string date to Date object
+  for(let i = 0; i < retrieved_score.length; i++) {
+    const date = retrieved_score[i].score.last_updated
+    if(date) { retrieved_score[i].score.last_updated = new Date(date) }
+  }
+
+  return retrieved_score
+}
+
+async function get_app_version() {
+  return app.getVersion()
 }
 
 // Scheme must be registered before the app is ready
@@ -44,11 +66,11 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
-async function createWindow() {
+async function createMainWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
     width: 580,
-    height: 600,
+    height: 750,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
@@ -73,14 +95,17 @@ async function createWindow() {
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // Save score. 
-  try { fs.mkdirSync(cache_dir_path) }
-  catch(err) {}
+  (async () => {
   if(score_data) {
-    const score_data_str = JSON.stringify(score_data)
-    fs.writeFileSync(`${cache_dir_path}/${score_cache_filename}`, score_data_str ? score_data_str : "")
-    console.log(`Cache saved at ${cache_dir_path}/${score_cache_filename}. `)
-    log(`Cache saved at ${cache_dir_path}/${score_cache_filename}. `, 'INFO')
+    let cache_data = {};
+    cache_data['version'] = await get_app_version()
+    cache_data['scores'] = score_data
+    const cache_data_str = JSON.stringify(cache_data)
+    fs.writeFileSync(`${cache_dir_path}/${cache_filename}`, cache_data_str ? cache_data_str : "")
+    console.log(`Cache saved at ${cache_dir_path}/${cache_filename}. `)
+    log(`Cache saved at ${cache_dir_path}/${cache_filename}. `, 'INFO')
   }
+})();
 
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
@@ -92,7 +117,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
 })
 
 // This method will be called when Electron has finished
@@ -108,7 +133,8 @@ app.on('ready', async () => {
     }
   }
   ipcMain.handle('retrieve_score', retrieve_score)
-  createWindow()
+  ipcMain.handle('get_app_version', get_app_version)
+  createMainWindow()
 })
 
 // Exit cleanly on request from parent process in development mode.

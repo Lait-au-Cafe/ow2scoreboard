@@ -210,7 +210,12 @@
 
 .control-panel .score .score-quick-actions {
     display: flex;
+    justify-content: center;
     gap: 10px;
+}
+
+.control-panel .score .score-quick-actions:nth-of-type(n+2) {
+    margin-top: 15px;
 }
 
 .control-panel .score .score-quick-actions button {
@@ -221,26 +226,55 @@
     border-radius: 10px;
     cursor: pointer;
 }
+.control-panel .score .score-quick-actions button:active {
+    color: #ccc;
+}
 .control-panel .score .score-quick-actions button.score-quick-win-btn { border-color: red; }
 .control-panel .score .score-quick-actions button.score-quick-lose-btn { border-color: blue; }
 .control-panel .score .score-quick-actions button.score-quick-draw-btn { border-color: orange; }
+.control-panel .score .score-quick-actions button.score-quick-qualify-btn {
+    border-color: #333;
+    flex-grow: 0;
+    flex-basis: 300px;
+}
 
 .control-panel .score .score-quick-actions-footer {
     margin: 8px 0;
     text-align: end;
 }
 
-.control-panel .score .score-control {
+.control-panel .score .score-control section {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin: 10px 0;
     font-size: 32px;
 }
 
-.control-panel .score .score-control input[type=number] {
+.control-panel .score .score-control section span {
+    margin: 0 8px;
+}
+
+.control-panel .score .score-control section input[type=number] {
     width: 3ch;
     margin-left: 5px;
     font-size: 32px;
+}
+
+.control-panel .score .score-control section:first-of-type {
+    padding: 4px;
+    border: double 5px #333;
+    background-color: #fff;
+}
+
+.control-panel .score .score-control section:nth-of-type(n+2) {
+    font-size: 24px;
+    margin-top: 24px;
+}
+
+.control-panel .score .score-control section:nth-of-type(n+2) input[type=number] {
+    width: 3ch;
+    margin-left: 5px;
+    font-size: 24px;
 }
 
 input[type=number]::-webkit-inner-spin-button, 
