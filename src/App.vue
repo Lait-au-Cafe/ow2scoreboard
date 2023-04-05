@@ -3,6 +3,7 @@
     <div class="close"><span class="material-icons-outlined">close</span></div>
     <div class="log"></div>
   </div>
+
   <div class="container">
     <ul class="role-menu">
       <li>
@@ -18,7 +19,7 @@
         <a href="#" id="menu-support" @click="switch_tab('support')">Support</a>
       </li>
     </ul>
-    <button class="setting"><span class="material-icons">settings</span></button>
+    <button class="setting-button"><span class="material-icons">settings</span></button>
     <section v-for="role in roles" class="control-panel" :id="role.name" :key="role.name" :class="{ active: role.name === selected_role }">
       <section class="rank">
         <div>
@@ -86,6 +87,60 @@
         </section>
       </section>
     </section>
+
+    <section class="setting-overlay hidden">
+      <button class="close-button"><span class="material-icons-outlined">close</span></button>
+      <div>
+        <section>
+          <h1>表示設定 (Display)</h1>
+          <fieldset class="alignment">
+            <legend>コンテンツの揃え (Alignment)</legend>
+            <fieldset>
+              <legend>縦並べ表示 (Vertical layout)</legend>
+              <input type="radio" name="vertical-align" id="top" value="top" v-model="preference.display.alignment.vertical">
+              <label for="top"><span class="material-icons-outlined">align_vertical_top</span></label>
+              <input type="radio" name="vertical-align" id="middle" value="middle" v-model="preference.display.alignment.vertical">
+              <label for="middle"><span class="material-icons-outlined">align_vertical_center</span></label>
+              <input type="radio" name="vertical-align" id="bottom" value="bottom" v-model="preference.display.alignment.vertical">
+              <label for="bottom"><span class="material-icons-outlined">align_vertical_bottom</span></label>
+            </fieldset>
+            <fieldset>
+              <legend>横並べ表示 (Horizontal layout)</legend>
+              <input type="radio" name="horizontal-align" id="left" value="left" v-model="preference.display.alignment.horizontal">
+              <label for="left"><span class="material-icons-outlined">align_horizontal_left</span></label>
+              <input type="radio" name="horizontal-align" id="center" value="center" v-model="preference.display.alignment.horizontal">
+              <label for="center"><span class="material-icons-outlined">align_horizontal_center</span></label>
+              <input type="radio" name="horizontal-align" id="right" value="right" v-model="preference.display.alignment.horizontal">
+              <label for="right"><span class="material-icons-outlined">align_horizontal_right</span></label>
+            </fieldset>
+          </fieldset>
+          <fieldset class="interval-time">
+            <legend>切り替えの時間間隔 (Interval time)</legend>
+            <label>Rank badge & text: </label><!--
+            --><input type="number" v-model="preference.display.interval_time.rank_badge_text">秒(sec)<br>
+            <label>Score TOTAL & LATEST: </label><!--
+            --><input type="number" v-model="preference.display.interval_time.score_total_latest">秒(sec)
+          </fieldset>
+          <fieldset class="background-opacity">
+            <legend>背景の不透明度 (Background opacity)</legend>
+            <input type="range" min="0" max="1" step="0.1" list="bg-opacity-markers" v-model="preference.display.background_opacity"><input type="number" min="0" max="1" step="0.01" v-model="preference.display.background_opacity">
+            <datalist id="bg-opacity-markers">
+              <option value="0.0"></option>
+              <option value="0.1"></option>
+              <option value="0.2"></option>
+              <option value="0.3"></option>
+              <option value="0.4"></option>
+              <option value="0.5"></option>
+              <option value="0.6"></option>
+              <option value="0.7"></option>
+              <option value="0.8"></option>
+              <option value="0.9"></option>
+              <option value="1.0"></option>
+            </datalist>
+          </fieldset>
+        </section>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -107,6 +162,26 @@ function update_score(score) {
       document.querySelector('#overlay .log').appendChild(line)
       document.querySelector('#overlay').classList.add('show')
       console.error(`Error occured while updating score data. : ${e}`)
+    })
+  })();
+}
+
+// eslint-disable-next-line
+function update_preference(preference) {
+  (async () => {
+    // eslint-disable-next-line
+    const response = await fetch("http://localhost:3000/api/set_preference", {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json'
+      }, 
+      body: JSON.stringify(preference)
+    }).catch(e => {
+      const line = document.createElement('p')
+      line.innerText = `Error occured while updating preference. ${e}`
+      document.querySelector('#overlay .log').appendChild(line)
+      document.querySelector('#overlay').classList.add('show')
+      console.error(`Error occured while updating preference. : ${e}`)
     })
   })();
 }
@@ -139,7 +214,20 @@ export default {
       selected_role: "tank", 
       roles: initialize_score(), 
       tiers: ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster'], 
-      divisions: [5, 4, 3, 2, 1]
+      divisions: [5, 4, 3, 2, 1], 
+      preference: {
+        display: {
+          alignment: {
+            vertical: 'top', 
+            horizontal: 'center', 
+          }, 
+          interval_time: {
+            rank_badge_text: 10, 
+            score_total_latest: 20, 
+          }, 
+          background_opacity: 1.0, 
+        }, 
+      },
     }
   }, 
   computed: {
@@ -237,20 +325,43 @@ export default {
       handler: function(new_value, old_value) {
         update_score(new_value)
       }, 
-      deep: true
-    }
+      deep: true, 
+    }, 
+    preference: {
+      // eslint-disable-next-line
+      handler: function(new_value, old_value) {
+        update_preference(new_value)
+      }, 
+      deep: true, 
+    }, 
   }, 
   mounted: function() {
     // Set EventListenrs
-    const overlay_close_btn = document.querySelector('#overlay .close');
+    const overlay_close_btn = document.querySelector('#overlay .close')
     overlay_close_btn.addEventListener('click', () => {
-      document.querySelector('#overlay').classList.remove('show');
+      document.querySelector('#overlay').classList.remove('show')
     });
 
-    // Retrieve scores. 
+    const setting_btn = document.querySelector('.setting-button')
+    setting_btn.addEventListener('click', () => {
+      document.querySelector('.setting-overlay').classList.toggle('hidden')
+      setting_btn.classList.toggle('activated')
+    });
+    
+    const setting_close_btn = document.querySelector('.setting-overlay .close-button')
+    setting_close_btn.addEventListener('click', () => {
+      document.querySelector('.setting-overlay').classList.add('hidden')
+      setting_btn.classList.remove('activated')
+    });
+
     (async () => {
-      const retrieved_score = await window.electronAPI.retrieve_score()
-      if(retrieved_score) { this.roles = retrieved_score }
+      // Retrieve scores. 
+      const retrieved_score = await window['electronAPI'].retrieve_score()
+      if(retrieved_score !== undefined) { this.roles = retrieved_score }
+
+      // Retrieve preferences. 
+      const retrieved_preference = await window['electronAPI'].retrieve_preference()
+      if(retrieved_preference !== undefined) { this.preference = retrieved_preference }
     })();
   }
 }

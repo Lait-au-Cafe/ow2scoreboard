@@ -33,32 +33,60 @@ function log(msg, type) {
 fs.writeFileSync(`${cache_dir_path}/${log_filename}`, "")
 
 const cache_filename = "cache.json"
-async function retrieve_score() {
-  let cache_data = {}
-  try {
-    cache_data = JSON.parse(fs.readFileSync(`${cache_dir_path}/${cache_filename}`, 'utf8'))
-    console.log(`Cache file found: ${cache_dir_path}/${cache_filename}. `)
-    log("Cache file found: ${cache_dir_path}/${cache_filename}. ", 'INFO')
-  }
-  catch(err) {
-    console.log("Cache file not found. ")
-    log("Cache file not found. ", 'INFO')
-    return undefined
-  }
-
-  let retrieved_score = cache_data['scores']
-
-  // string date to Date object
-  for(let i = 0; i < retrieved_score.length; i++) {
-    const date = retrieved_score[i].score.last_updated
-    if(date) { retrieved_score[i].score.last_updated = new Date(date) }
-  }
-
-  return retrieved_score
+let cache_data = undefined
+try {
+  cache_data = JSON.parse(fs.readFileSync(`${cache_dir_path}/${cache_filename}`, 'utf8'))
+  console.log(`Cache file found: ${cache_dir_path}/${cache_filename}. `)
+  log(`Cache file found: ${cache_dir_path}/${cache_filename}. `, 'INFO')
+}
+catch(err) {
+  console.log("Cache file not found. ")
+  log("Cache file not found. ", 'INFO')
 }
 
 async function get_app_version() {
   return app.getVersion()
+}
+
+const score_template = undefined;
+function validate_score(score) {
+  // TODO
+  return score !== undefined
+}
+
+async function retrieve_score() {
+  if(cache_data !== undefined && validate_score(cache_data['scores'])) {
+    log(`Score cache found: ${cache_data['scores']}`, 'INFO')
+    let retrieved_score = cache_data['scores']
+    
+    // string date to Date object
+    for(let i = 0; i < retrieved_score.length; i++) {
+      const date = retrieved_score[i].score.last_updated
+      if(date) { retrieved_score[i].score.last_updated = new Date(date) }
+    }
+    
+    return retrieved_score
+  }
+
+  log("Score cache not found. ", 'INFO')
+  return undefined
+}
+
+const preference_template = undefined;
+function validate_preference(preference) {
+  // TODO
+  return preference !== undefined
+}
+
+async function retrieve_preference() {
+  if(cache_data !== undefined && validate_preference(cache_data['preference'])) {
+    log(`Preference cache found: ${cache_data['preference']}`, 'INFO')
+    let retrieved_preference = cache_data['preference']
+    return retrieved_preference
+  }
+  
+  log("Preference cache not found. ", 'INFO')
+  return undefined
 }
 
 // Scheme must be registered before the app is ready
@@ -69,7 +97,7 @@ protocol.registerSchemesAsPrivileged([
 async function createMainWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 580,
+    width: 625,
     height: 750,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
@@ -96,16 +124,17 @@ async function createMainWindow() {
 app.on('window-all-closed', () => {
   // Save score. 
   (async () => {
-  if(score_data) {
     let cache_data = {};
+
     cache_data['version'] = await get_app_version()
-    cache_data['scores'] = score_data
+    if(score_data) { cache_data['scores'] = score_data }
+    if(preference_data) { cache_data['preference'] = preference_data }
+
     const cache_data_str = JSON.stringify(cache_data)
     fs.writeFileSync(`${cache_dir_path}/${cache_filename}`, cache_data_str ? cache_data_str : "")
     console.log(`Cache saved at ${cache_dir_path}/${cache_filename}. `)
     log(`Cache saved at ${cache_dir_path}/${cache_filename}. `, 'INFO')
-  }
-})();
+  })();
 
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
@@ -133,6 +162,7 @@ app.on('ready', async () => {
     }
   }
   ipcMain.handle('retrieve_score', retrieve_score)
+  ipcMain.handle('retrieve_preference', retrieve_preference)
   ipcMain.handle('get_app_version', get_app_version)
   createMainWindow()
 })
@@ -153,6 +183,7 @@ if (isDevelopment) {
 }
 
 let score_data = undefined
+let preference_data = undefined
 
 // Launch http server
 const express = require('express')
@@ -169,9 +200,17 @@ express_app.use(cors())
 express_app.post('/api/get_score', (req, res) => {
   res.json(score_data)
 })
-
 express_app.post('/api/set_score', (req, res) => {
   score_data = req.body
+  res.setHeader('Content-Type', 'text/html')
+  res.send("OK")
+})
+
+express_app.post('/api/get_preference', (req, res) => {
+  res.json(preference_data)
+})
+express_app.post('/api/set_preference', (req, res) => {
+  preference_data = req.body
   res.setHeader('Content-Type', 'text/html')
   res.send("OK")
 })
