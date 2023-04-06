@@ -3,69 +3,124 @@
 import { app, protocol, Menu, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
+import { version } from 'os'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const fs = require('fs')
 const path = require('path')
 
-let cache_dir_path;
-if(process.env.WEBPACK_DEV_SERVER_URL) { cache_dir_path = `${__dirname}/.cache` }
-else { cache_dir_path = `${app.getPath('userData')}/.cache` }
-try { fs.mkdirSync(cache_dir_path) }
+let cacheDirPath;
+if(process.env.WEBPACK_DEV_SERVER_URL) { cacheDirPath = `${__dirname}/.cache` }
+else { cacheDirPath = `${app.getPath('userData')}/.cache` }
+try { fs.mkdirSync(cacheDirPath) }
 catch(err) {
   if(err.code === 'EEXIST') { console.log("Cache directory exests. ") }
   else { console.log(err) }
 }
 
-const log_filename = "log.txt"
+const logFilename = "log.txt"
 function log(msg, type) {
-  const current_time = new Date()
-  const year = current_time.getFullYear()
-  const month = ("00" + current_time.getMonth()).slice(-2)
-  const day = ("00" + current_time.getDate()).slice(-2)
-  const hours = ("00" + current_time.getHours()).slice(-2)
-  const minutes = ("00" + current_time.getMinutes()).slice(-2)
-  const seconds = ("00" + current_time.getSeconds()).slice(-2)
-  const formatted_date = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
+  const currentTime = new Date()
+  const year = currentTime.getFullYear()
+  const month = ("00" + currentTime.getMonth()).slice(-2)
+  const day = ("00" + currentTime.getDate()).slice(-2)
+  const hours = ("00" + currentTime.getHours()).slice(-2)
+  const minutes = ("00" + currentTime.getMinutes()).slice(-2)
+  const seconds = ("00" + currentTime.getSeconds()).slice(-2)
+  const formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
 
-  const line = `[${formatted_date}][${type}] ${msg}\n`
-  fs.appendFileSync(`${cache_dir_path}/${log_filename}`, line)
+  const line = `[${formattedDate}][${type}] ${msg}\n`
+  fs.appendFileSync(`${cacheDirPath}/${logFilename}`, line)
 }
-fs.writeFileSync(`${cache_dir_path}/${log_filename}`, "")
+fs.writeFileSync(`${cacheDirPath}/${logFilename}`, "")
 
-const cache_filename = "cache.json"
-let cache_data = undefined
+function isVersionLessThan(target, reference) {
+  let targetNumbers = target.split('.')
+  let referenceNumbers = reference.split('.')
+  // major
+  if(targetNumbers[0] < referenceNumbers[0]) { return true }
+  if(targetNumbers[0] > referenceNumbers[0]) { return false }
+  // minor
+  if(targetNumbers[1] < referenceNumbers[1]) { return true }
+  if(targetNumbers[1] > referenceNumbers[1]) { return false }
+  // patch
+  if(targetNumbers[2] < referenceNumbers[2]) { return true }
+  
+  return false
+}
+
+function updateCacheFormat(cachedData) {
+  let newCachedData = {}
+  if(isVersionLessThan(cachedData.version, '2.2.0')) {
+    if(cachedData.scores !== undefined) {
+      newCachedData.scores = []
+      for(let i=0; i < 3; i++) {
+        newCachedData.scores[i] = {
+          name: cachedData.scores[i].name, 
+          isVisible: cachedData.scores[i].is_visible, 
+          rank: {
+            currentTier: cachedData.scores[i].rank.current_tier, 
+            currentDivision: cachedData.scores[i].rank.current_division, 
+          }, 
+          score: {
+            winLossDraws: cachedData.scores[i].score.win_loss_draws, 
+            lastUpdated: cachedData.scores[i].score.lastUpdated, 
+          }
+        }
+      }
+    }
+    if(cachedData.preference !== undefined) {
+      newCachedData.preference = {
+        display: {
+          alignment: cachedData.preference.display.alignment, 
+          intervalTime: {
+            rankBadgeAndText: cachedData.preference.display.interval_time.rank_badge_text, 
+            scoreTotalAndLatest: cachedData.preference.display.interval_time.score_total_latest,
+          }, 
+          backgroundOpacity: cachedData.preference.display.background_opacity, 
+        }
+      }
+    }
+  }
+
+  return newCachedData
+}
+
+const cacheFilename = "cache.json"
+let cachedData = undefined
 try {
-  cache_data = JSON.parse(fs.readFileSync(`${cache_dir_path}/${cache_filename}`, 'utf8'))
-  console.log(`Cache file found: ${cache_dir_path}/${cache_filename}. `)
-  log(`Cache file found: ${cache_dir_path}/${cache_filename}. `, 'INFO')
+  cachedData = JSON.parse(fs.readFileSync(`${cacheDirPath}/${cacheFilename}`, 'utf8'))
+  console.log(`Cache file found: ${cacheDirPath}/${cacheFilename}. `)
+  log(`Cache file found: ${cacheDirPath}/${cacheFilename}. (version ${cachedData.version})`, 'INFO')
 }
 catch(err) {
   console.log("Cache file not found. ")
   log("Cache file not found. ", 'INFO')
 }
+cachedData = updateCacheFormat(cachedData)
+console.dir(cachedData, {depth: null})
 
-async function get_app_version() {
+async function getAppVersion() {
   return app.getVersion()
 }
 
 const score_template = undefined;
-function validate_score(score) {
+function validateScoresData(score) {
   // TODO
   return score !== undefined
 }
 
-async function retrieve_score() {
-  if(cache_data !== undefined && validate_score(cache_data['scores'])) {
-    log(`Score cache found: ${cache_data['scores']}`, 'INFO')
-    let retrieved_score = cache_data['scores']
+async function retrieveScores() {
+  if(cachedData !== undefined && validateScoresData(cachedData['scores'])) {
+    log(`Score cache found: ${cachedData['scores']}`, 'INFO')
+    let retrievedScores = cachedData['scores']
     
     // string date to Date object
-    for(let i = 0; i < retrieved_score.length; i++) {
-      const date = retrieved_score[i].score.last_updated
-      if(date) { retrieved_score[i].score.last_updated = new Date(date) }
+    for(let i = 0; i < retrievedScores.length; i++) {
+      const date = retrievedScores[i].score.lastUpdated
+      if(date) { retrievedScores[i].score.lastUpdated = new Date(date) }
     }
     
-    return retrieved_score
+    return retrievedScores
   }
 
   log("Score cache not found. ", 'INFO')
@@ -73,16 +128,16 @@ async function retrieve_score() {
 }
 
 const preference_template = undefined;
-function validate_preference(preference) {
+function validatePreference(preference) {
   // TODO
   return preference !== undefined
 }
 
-async function retrieve_preference() {
-  if(cache_data !== undefined && validate_preference(cache_data['preference'])) {
-    log(`Preference cache found: ${cache_data['preference']}`, 'INFO')
-    let retrieved_preference = cache_data['preference']
-    return retrieved_preference
+async function retrievePreference() {
+  if(cachedData !== undefined && validatePreference(cachedData['preference'])) {
+    log(`Preference cache found: ${cachedData['preference']}`, 'INFO')
+    let retrievedPreference = cachedData['preference']
+    return retrievedPreference
   }
   
   log("Preference cache not found. ", 'INFO')
@@ -124,16 +179,16 @@ async function createMainWindow() {
 app.on('window-all-closed', () => {
   // Save score. 
   (async () => {
-    let cache_data = {};
+    let cachedData = {};
 
-    cache_data['version'] = await get_app_version()
-    if(score_data) { cache_data['scores'] = score_data }
-    if(preference_data) { cache_data['preference'] = preference_data }
+    cachedData['version'] = await getAppVersion()
+    if(currentScoresData) { cachedData['scores'] = currentScoresData }
+    if(currentPreferenceData) { cachedData['preference'] = currentPreferenceData }
 
-    const cache_data_str = JSON.stringify(cache_data)
-    fs.writeFileSync(`${cache_dir_path}/${cache_filename}`, cache_data_str ? cache_data_str : "")
-    console.log(`Cache saved at ${cache_dir_path}/${cache_filename}. `)
-    log(`Cache saved at ${cache_dir_path}/${cache_filename}. `, 'INFO')
+    const cachedData_str = JSON.stringify(cachedData)
+    fs.writeFileSync(`${cacheDirPath}/${cacheFilename}`, cachedData_str ? cachedData_str : "")
+    console.log(`Cache saved at ${cacheDirPath}/${cacheFilename}. `)
+    log(`Cache saved at ${cacheDirPath}/${cacheFilename}. `, 'INFO')
   })();
 
   // On macOS it is common for applications and their menu bar
@@ -161,9 +216,9 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
-  ipcMain.handle('retrieve_score', retrieve_score)
-  ipcMain.handle('retrieve_preference', retrieve_preference)
-  ipcMain.handle('get_app_version', get_app_version)
+  ipcMain.handle('retrieveScores', retrieveScores)
+  ipcMain.handle('retrievePreference', retrievePreference)
+  ipcMain.handle('getAppVersion', getAppVersion)
   createMainWindow()
 })
 
@@ -182,40 +237,40 @@ if (isDevelopment) {
   }
 }
 
-let score_data = undefined
-let preference_data = undefined
+let currentScoresData = undefined
+let currentPreferenceData = undefined
 
 // Launch http server
 const express = require('express')
-const express_app = express()
+const expressApp = express()
 
 const cors = require('cors')
 // const corsOptions = {
 //   origin: 'http://localhost:8080'
 // }
 
-express_app.use(express.json())
-express_app.use(cors())
+expressApp.use(express.json())
+expressApp.use(cors())
 
-express_app.post('/api/get_score', (req, res) => {
-  res.json(score_data)
+expressApp.post('/api/get_score', (req, res) => {
+  res.json(currentScoresData)
 })
-express_app.post('/api/set_score', (req, res) => {
-  score_data = req.body
+expressApp.post('/api/set_score', (req, res) => {
+  currentScoresData = req.body
   res.setHeader('Content-Type', 'text/html')
   res.send("OK")
 })
 
-express_app.post('/api/get_preference', (req, res) => {
-  res.json(preference_data)
+expressApp.post('/api/get_preference', (req, res) => {
+  res.json(currentPreferenceData)
 })
-express_app.post('/api/set_preference', (req, res) => {
-  preference_data = req.body
+expressApp.post('/api/set_preference', (req, res) => {
+  currentPreferenceData = req.body
   res.setHeader('Content-Type', 'text/html')
   res.send("OK")
 })
 
-express_app.listen(3000, () => {
+expressApp.listen(3000, () => {
   console.log("Listening on port 3000. ")
   log("Listening on port 3000. ", 'INFO')
 });

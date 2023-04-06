@@ -7,37 +7,37 @@
   <div class="container">
     <ul class="role-menu">
       <li>
-        <input type="checkbox" id="tank-visibility" class="select-visible-role" v-model="roles[0].is_visible">
-        <a href="#" id="menu-tank" @click="switch_tab('tank')">Tank</a>
+        <input type="checkbox" id="tank-visibility" class="select-visible-role" v-model="roles[0].isVisible">
+        <a href="#" id="menu-tank" @click="switchTab('tank')">Tank</a>
       </li>
       <li>
-        <input type="checkbox" id="dps-visibility" class="select-visible-role" v-model="roles[1].is_visible">
-        <a href="#" id="menu-dps" @click="switch_tab('dps')">DPS</a>
+        <input type="checkbox" id="dps-visibility" class="select-visible-role" v-model="roles[1].isVisible">
+        <a href="#" id="menu-dps" @click="switchTab('dps')">DPS</a>
       </li>
       <li>
-        <input type="checkbox" id="support-visibility" class="select-visible-role" v-model="roles[2].is_visible">
-        <a href="#" id="menu-support" @click="switch_tab('support')">Support</a>
+        <input type="checkbox" id="support-visibility" class="select-visible-role" v-model="roles[2].isVisible">
+        <a href="#" id="menu-support" @click="switchTab('support')">Support</a>
       </li>
     </ul>
     <button class="setting-button"><span class="material-icons">settings</span></button>
-    <section v-for="role in roles" class="control-panel" :id="role.name" :key="role.name" :class="{ active: role.name === selected_role }">
+    <section v-for="role in roles" class="control-panel" :id="role.name" :key="role.name" :class="{ active: role.name === selectedRole }">
       <section class="rank">
         <div>
           <section class="rank-preview">
             <template v-for="tier in tiers" :key="tier">
-              <img v-for="division in divisions" :key="division" :class="{ active: tier === role.rank.current_tier && division === role.rank.current_division }" :src="image_path_builder(tier, division)">
+              <img v-for="division in divisions" :key="division" :class="{ active: tier === role.rank.currentTier && division === role.rank.currentDivision }" :src="imagePathBuilder(tier, division)">
             </template>
           </section>
           <section class="rank-quick-actions">
-            <button class="rank-previous" :disabled="role.rank.current_tier === lowest_tier && role.rank.current_division === lowest_division" @click="descend_rank(role)"><span class="material-icons-outlined">arrow_back_ios</span></button>
-            <button class="rank-next" :disabled="role.current_tier === highest_tier && role.rank.current_division === highest_division" @click="ascend_rank(role)"><span class="material-icons-outlined">arrow_forward_ios</span></button>
+            <button class="rank-previous" :disabled="role.rank.currentTier === lowestTier && role.rank.currentDivision === lowestDivision" @click="descendRank(role)"><span class="material-icons-outlined">arrow_back_ios</span></button>
+            <button class="rank-next" :disabled="role.currentTier === highestTier && role.rank.currentDivision === highestDivision" @click="ascendRank(role)"><span class="material-icons-outlined">arrow_forward_ios</span></button>
           </section>
         </div>
         <section class="rank-control">
           <fieldset class="skill-tier">
             <legend>Skill Tier</legend>
             <div v-for="tier in tiers" :key="tier">
-              <input type="radio" :id="`${role.name}-tier-${tier}`" :value="tier" :name="`${role.name}-skill-tier`" v-model="role.rank.current_tier"><!--
+              <input type="radio" :id="`${role.name}-tier-${tier}`" :value="tier" :name="`${role.name}-skill-tier`" v-model="role.rank.currentTier"><!--
               --><label :for="`${role.name}-tier-${tier}`">{{tier.charAt(0).toUpperCase()+tier.slice(1)}}</label>
             </div>
           </fieldset>
@@ -45,7 +45,7 @@
           <fieldset class="tier-division">
             <legend>Tier Division</legend>
             <div v-for="division in divisions" :key="division">
-              <input type="radio" :id="`${role.name}-division-${division}`" :value="division" :name="`${role.name}-tier-division`" v-model="role.rank.current_division"><!--
+              <input type="radio" :id="`${role.name}-division-${division}`" :value="division" :name="`${role.name}-tier-division`" v-model="role.rank.currentDivision"><!--
               --><label :for="`${role.name}-division-${division}`">{{division}}</label>
             </div>
           </fieldset>
@@ -54,36 +54,36 @@
 
       <section class="score">
         <section class="score-quick-actions">
-          <button class="score-quick-win-btn" @click="add_win(role)" :disabled="score_buttons_cooldown">Win</button>
-          <button class="score-quick-lose-btn" @click="add_loss(role)" :disabled="score_buttons_cooldown">Lose</button>
-          <button class="score-quick-draw-btn" @click="add_draw(role)" :disabled="score_buttons_cooldown">Draw</button>
+          <button class="score-quick-win-btn" @click="addWin(role)" :disabled="scoreButtonsCooldown">Win</button>
+          <button class="score-quick-lose-btn" @click="addLoss(role)" :disabled="scoreButtonsCooldown">Lose</button>
+          <button class="score-quick-draw-btn" @click="addDraw(role)" :disabled="scoreButtonsCooldown">Draw</button>
         </section>
         <section class="score-quick-actions">
-          <button class="score-quick-qualify-btn" @click="add_score(role)" :disabled="role.score.win_loss_draws.length <= 1 && (role.score.win_loss_draws[0][0] + role.score.win_loss_draws[0][1] + role.score.win_loss_draws[0][2] <= 0)">{{ `${(role.score.win_loss_draws[0][0] + role.score.win_loss_draws[0][1] + role.score.win_loss_draws[0][2] > 0) ? "" : "Undo "}Qualify` }}</button>
+          <button class="score-quick-qualify-btn" @click="addScore(role)" :disabled="role.score.winLossDraws.length <= 1 && (role.score.winLossDraws[0][0] + role.score.winLossDraws[0][1] + role.score.winLossDraws[0][2] <= 0)">{{ `${(role.score.winLossDraws[0][0] + role.score.winLossDraws[0][1] + role.score.winLossDraws[0][2] > 0) ? "" : "Undo "}Qualify` }}</button>
         </section>
         <section class="score-quick-actions-footer">
-          <span class="score-update-log">Last Updated: {{date_formatter(role.score.last_updated)}}</span>
+          <span class="score-update-log">Last Updated: {{dateFormatter(role.score.lastUpdated)}}</span>
         </section>
         <section class="score-control">
-          <section v-for="win_loss_draw in role.score.win_loss_draws" :key="win_loss_draw">
+          <section v-for="winLossDraw in role.score.winLossDraws" :key="winLossDraw">
             <span>
               <label for="score-win">Win</label><!--
-              --><input type="number" class="score-win" name="score-win" min="0" @input="update_date(role)" v-model="win_loss_draw[0]">
+              --><input type="number" class="score-win" name="score-win" min="0" @input="updateDate(role)" v-model="winLossDraw[0]">
             </span>
             -
             <span>
               <label for="score-loss">Loss</label><!--
-              --><input type="number" class="score-loss" name="score-loss" min="0" @input="update_date(role)" v-model="win_loss_draw[1]">
+              --><input type="number" class="score-loss" name="score-loss" min="0" @input="updateDate(role)" v-model="winLossDraw[1]">
             </span>
             -
             <span>
               <label for="score-draw">Draw</label><!--
-              --><input type="number" class="score-draw" name="score-draw" min="0" @input="update_date(role)" v-model="win_loss_draw[2]">
+              --><input type="number" class="score-draw" name="score-draw" min="0" @input="updateDate(role)" v-model="winLossDraw[2]">
             </span>
           </section>
         </section>
         <section class="score-footer">
-          <button class="score-clear-all-btn" @click="clear_score(role)">{{`Clear ${role.name}'s score`}}</button>
+          <button class="score-clear-all-btn" @click="clearScore(role)">{{`Clear ${role.name}'s score`}}</button>
         </section>
       </section>
     </section>
@@ -117,13 +117,13 @@
           <fieldset class="interval-time">
             <legend>切り替えの時間間隔 (Interval time)</legend>
             <label>Rank badge & text: </label><!--
-            --><input type="number" v-model="preference.display.interval_time.rank_badge_text">秒(sec)<br>
+            --><input type="number" v-model="preference.display.intervalTime.rankBadgeAndText">秒(sec)<br>
             <label>Score TOTAL & LATEST: </label><!--
-            --><input type="number" v-model="preference.display.interval_time.score_total_latest">秒(sec)
+            --><input type="number" v-model="preference.display.intervalTime.scoreTotalAndLatest">秒(sec)
           </fieldset>
           <fieldset class="background-opacity">
             <legend>背景の不透明度 (Background opacity)</legend>
-            <input type="range" min="0" max="1" step="0.1" list="bg-opacity-markers" v-model="preference.display.background_opacity"><input type="number" min="0" max="1" step="0.01" v-model="preference.display.background_opacity">
+            <input type="range" min="0" max="1" step="0.1" list="bg-opacity-markers" v-model="preference.display.backgroundOpacity"><input type="number" min="0" max="1" step="0.01" v-model="preference.display.backgroundOpacity">
             <datalist id="bg-opacity-markers">
               <option value="0.0"></option>
               <option value="0.1"></option>
@@ -147,7 +147,7 @@
 <script>
 
 // eslint-disable-next-line
-function update_score(score) {
+function updateScores(score) {
   (async () => {
     // eslint-disable-next-line
     const response = await fetch("http://localhost:3000/api/set_score", {
@@ -167,7 +167,7 @@ function update_score(score) {
 }
 
 // eslint-disable-next-line
-function update_preference(preference) {
+function updatePreference(preference) {
   (async () => {
     // eslint-disable-next-line
     const response = await fetch("http://localhost:3000/api/set_preference", {
@@ -186,23 +186,23 @@ function update_preference(preference) {
   })();
 }
 
-function initialize_score() {
-  const score_data = []
+function initializeScores() {
+  const scoresData = []
   for(const role of ['tank', 'dps', 'support']) {
-    score_data.push({
+    scoresData.push({
       name: role, 
-      is_visible: true,
+      isVisible: true,
       rank: {
-        current_tier: 'bronze', 
-        current_division: 5
+        currentTier: 'bronze', 
+        currentDivision: 5
       }, 
       score: {
-        win_loss_draws: [[0, 0, 0]], 
-        last_updated: undefined
+        winLossDraws: [[0, 0, 0]], 
+        lastUpdated: undefined
       }
     })
   }
-  return score_data
+  return scoresData
 }
 
 export default {
@@ -210,9 +210,9 @@ export default {
   components: {}, 
   data: function() {
     return {
-      score_buttons_cooldown: false,
-      selected_role: "tank", 
-      roles: initialize_score(), 
+      scoreButtonsCooldown: false,
+      selectedRole: "tank", 
+      roles: initializeScores(), 
       tiers: ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster'], 
       divisions: [5, 4, 3, 2, 1], 
       preference: {
@@ -221,94 +221,94 @@ export default {
             vertical: 'top', 
             horizontal: 'center', 
           }, 
-          interval_time: {
-            rank_badge_text: 10, 
-            score_total_latest: 20, 
+          intervalTime: {
+            rankBadgeAndText: 10, 
+            scoreTotalAndLatest: 20, 
           }, 
-          background_opacity: 1.0, 
+          backgroundOpacity: 1.0, 
         }, 
       },
     }
   }, 
   computed: {
-    lowest_tier: function() { return this.tiers[0] }, 
-    highest_tier: function() { return this.tiers.slice(-1)[0] }, 
-    lowest_division: function() { return this.divisions[0] }, 
-    highest_division: function() { return this.divisions.slice(-1)[0] }
+    lowestTier: function() { return this.tiers[0] }, 
+    highestTier: function() { return this.tiers.slice(-1)[0] }, 
+    lowestDivision: function() { return this.divisions[0] }, 
+    highestDivision: function() { return this.divisions.slice(-1)[0] }
   }, 
   methods: {
-    image_path_builder: function(tier, division) {
+    imagePathBuilder: function(tier, division) {
       return require(`../assets/rank_badge/${tier}/${division}.png`)
     },
-    switch_tab: function(role) {
-      this.selected_role = role
+    switchTab: function(role) {
+      this.selectedRole = role
     }, 
-    ascend_rank: function(role) {
-      let tier_index = this.tiers.indexOf(role.rank.current_tier)
-      let division_index = this.divisions.indexOf(role.rank.current_division)
+    ascendRank: function(role) {
+      let tierIndex = this.tiers.indexOf(role.rank.currentTier)
+      let divisionIndex = this.divisions.indexOf(role.rank.currentDivision)
 
-      if(tier_index < 0 || division_index < 0) { return }
+      if(tierIndex < 0 || divisionIndex < 0) { return }
 
-      if(division_index < this.divisions.length - 1) {
-        role.rank.current_division = this.divisions[division_index + 1]
+      if(divisionIndex < this.divisions.length - 1) {
+        role.rank.currentDivision = this.divisions[divisionIndex + 1]
       }
       else {
-        if(tier_index >= this.tiers.length - 1) { return }
+        if(tierIndex >= this.tiers.length - 1) { return }
 
-        role.rank.current_tier = this.tiers[tier_index + 1]
-        role.rank.current_division = this.divisions[0]
+        role.rank.currentTier = this.tiers[tierIndex + 1]
+        role.rank.currentDivision = this.divisions[0]
       }
     }, 
-    descend_rank: function(role) {
-      let tier_index = this.tiers.indexOf(role.rank.current_tier)
-      let division_index = this.divisions.indexOf(role.rank.current_division)
+    descendRank: function(role) {
+      let tierIndex = this.tiers.indexOf(role.rank.currentTier)
+      let divisionIndex = this.divisions.indexOf(role.rank.currentDivision)
 
-      if(tier_index < 0 || division_index < 0) { return }
+      if(tierIndex < 0 || divisionIndex < 0) { return }
 
-      if(division_index > 0) {
-        role.rank.current_division = this.divisions[division_index - 1]
+      if(divisionIndex > 0) {
+        role.rank.currentDivision = this.divisions[divisionIndex - 1]
       }
       else {
-        if(tier_index == 0) { return }
+        if(tierIndex == 0) { return }
 
-        role.rank.current_tier = this.tiers[tier_index - 1]
-        role.rank.current_division = this.divisions[this.divisions.length - 1]
+        role.rank.current_tier = this.tiers[tierIndex - 1]
+        role.rank.currentDivision = this.divisions[this.divisions.length - 1]
       }
     }, 
-    add_win: function(role) {
-      this.score_buttons_cooldown = true
-      role.score.win_loss_draws[0][0] += 1
-      this.update_date(role)
-      setTimeout(() => { this.score_buttons_cooldown = false }, 500)
+    addWin: function(role) {
+      this.scoreButtonsCooldown = true
+      role.score.winLossDraws[0][0] += 1
+      this.updateDate(role)
+      setTimeout(() => { this.scoreButtonsCooldown = false }, 500)
     }, 
-    add_loss: function(role) {
-      this.score_buttons_cooldown = true
-      role.score.win_loss_draws[0][1] += 1
-      this.update_date(role)
-      setTimeout(() => { this.score_buttons_cooldown = false }, 500)
+    addLoss: function(role) {
+      this.scoreButtonsCooldown = true
+      role.score.winLossDraws[0][1] += 1
+      this.updateDate(role)
+      setTimeout(() => { this.scoreButtonsCooldown = false }, 500)
     }, 
-    add_draw: function(role) {
-      this.score_buttons_cooldown = true
-      role.score.win_loss_draws[0][2] += 1
-      this.update_date(role)
-      setTimeout(() => { this.score_buttons_cooldown = false }, 500)
+    addDraw: function(role) {
+      this.scoreButtonsCooldown = true
+      role.score.winLossDraws[0][2] += 1
+      this.updateDate(role)
+      setTimeout(() => { this.scoreButtonsCooldown = false }, 500)
     }, 
-    add_score: function(role) {
-      const is_qualify = role.score.win_loss_draws[0][0]+role.score.win_loss_draws[0][1]+role.score.win_loss_draws[0][2] > 0;
-      role.score.win_loss_draws = role.score.win_loss_draws.filter(score => score[0]+score[1]+score[2]>0)
+    addScore: function(role) {
+      const is_qualify = role.score.winLossDraws[0][0]+role.score.winLossDraws[0][1]+role.score.winLossDraws[0][2] > 0;
+      role.score.winLossDraws = role.score.winLossDraws.filter(score => score[0]+score[1]+score[2]>0)
       if(is_qualify) {
-        role.score.win_loss_draws.unshift([0, 0, 0])
+        role.score.winLossDraws.unshift([0, 0, 0])
       }
     }, 
-    clear_score: function(role) {
+    clearScore: function(role) {
       if(!confirm(`Are you sure you want to clear the score of ${role.name}?`)) { return }
-      role.score.win_loss_draws = [[0, 0, 0]]
+      role.score.winLossDraws = [[0, 0, 0]]
     }, 
-    update_date(role) {
-      role.score.last_updated = new Date()
+    updateDate(role) {
+      role.score.lastUpdated = new Date()
     }, 
-    date_formatter: function(date) {
-      if(!date) { return "" }
+    dateFormatter: function(date) {
+      if(date === undefined) { return "" }
 
       const year = date.getFullYear()
       const month = ("00" + (date.getMonth() + 1)).slice(-2)
@@ -323,45 +323,45 @@ export default {
     roles: {
       // eslint-disable-next-line
       handler: function(new_value, old_value) {
-        update_score(new_value)
+        updateScores(new_value)
       }, 
       deep: true, 
     }, 
     preference: {
       // eslint-disable-next-line
       handler: function(new_value, old_value) {
-        update_preference(new_value)
+        updatePreference(new_value)
       }, 
       deep: true, 
     }, 
   }, 
   mounted: function() {
     // Set EventListenrs
-    const overlay_close_btn = document.querySelector('#overlay .close')
-    overlay_close_btn.addEventListener('click', () => {
+    const overlayCloseBtn = document.querySelector('#overlay .close')
+    overlayCloseBtn.addEventListener('click', () => {
       document.querySelector('#overlay').classList.remove('show')
     });
 
-    const setting_btn = document.querySelector('.setting-button')
-    setting_btn.addEventListener('click', () => {
+    const settingBtn = document.querySelector('.setting-button')
+    settingBtn.addEventListener('click', () => {
       document.querySelector('.setting-overlay').classList.toggle('hidden')
-      setting_btn.classList.toggle('activated')
+      settingBtn.classList.toggle('activated')
     });
     
-    const setting_close_btn = document.querySelector('.setting-overlay .close-button')
-    setting_close_btn.addEventListener('click', () => {
+    const settingCloseBtn = document.querySelector('.setting-overlay .close-button')
+    settingCloseBtn.addEventListener('click', () => {
       document.querySelector('.setting-overlay').classList.add('hidden')
-      setting_btn.classList.remove('activated')
+      settingBtn.classList.remove('activated')
     });
 
     (async () => {
       // Retrieve scores. 
-      const retrieved_score = await window['electronAPI'].retrieve_score()
-      if(retrieved_score !== undefined) { this.roles = retrieved_score }
+      const retrievedScores = await window.electronAPI.retrieveScores()
+      if(retrievedScores !== undefined) { this.roles = retrievedScores }
 
       // Retrieve preferences. 
-      const retrieved_preference = await window['electronAPI'].retrieve_preference()
-      if(retrieved_preference !== undefined) { this.preference = retrieved_preference }
+      const retrievedPreference = await window.electronAPI.retrievePreference()
+      if(retrievedPreference !== undefined) { this.preference = retrievedPreference }
     })();
   }
 }

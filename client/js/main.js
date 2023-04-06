@@ -23,52 +23,52 @@
     }
     let totalAndLatestTimeoutId = setTimeout(cycleTotalAndLatest, totalAndLatestInterval)
 
-    function update_score() {
+    function updateScore() {
         (async () => {
             const response = await fetch("http://localhost:3000/api/get_score", {
               method: 'POST'
             })
             .then((response) => response.json())
-            .then((score_data) => {
-                if(score_data !== undefined) {
+            .then((scoresData) => {
+                if(scoresData !== undefined) {
                     const roles = ['tank', 'dps', 'support']
                     roles.forEach((role, index) => {
                         const row = $(`tr.${role}`)
                         const badge = $(`.${role} .badge img`)
                         const division = $(`.${role} .badge span`)
-                        const latest_wins = $(`.${role} .latest .win`)
-                        const latest_losses = $(`.${role} .latest .loss`)
-                        const latest_draws = $(`.${role} .latest .draw`)
-                        const total_wins = $(`.${role} .total .win`)
-                        const total_losses = $(`.${role} .total .loss`)
-                        const total_draws = $(`.${role} .total .draw`)
+                        const latestWinsField = $(`.${role} .latest .win`)
+                        const latestLossesField = $(`.${role} .latest .loss`)
+                        const latestDrawsField = $(`.${role} .latest .draw`)
+                        const totalWinsField = $(`.${role} .total .win`)
+                        const totalLossesField = $(`.${role} .total .loss`)
+                        const totalDrawsField = $(`.${role} .total .draw`)
                         
-                        if(!score_data[index].is_visible) { row.addClass('hidden') }
+                        if(!scoresData[index].isVisible) { row.addClass('hidden') }
                         else { row.removeClass('hidden') }
                         
-                        badge.attr('src', `../assets/rank_badge/${score_data[index].rank.current_tier}/${score_data[index].rank.current_division}.png`)
+                        badge.attr('src', `../assets/rank_badge/${scoresData[index].rank.currentTier}/${scoresData[index].rank.currentDivision}.png`)
                         
                         let tier
-                        if(score_data[index].rank.current_tier == 'grandmaster') { tier = 'GM' }
-                        else { tier = score_data[index].rank.current_tier.slice(0, 1).toUpperCase() }
-                        division.html(`${tier}&thinsp;${score_data[index].rank.current_division}`)
+                        if(scoresData[index].rank.currentTier == 'grandmaster') { tier = 'GM' }
+                        else { tier = scoresData[index].rank.currentTier.slice(0, 1).toUpperCase() }
+                        division.html(`${tier}&thinsp;${scoresData[index].rank.currentDivision}`)
     
-                        latest_wins.text(score_data[index].score.win_loss_draws[0][0])
-                        latest_losses.text(score_data[index].score.win_loss_draws[0][1])
-                        latest_draws.text(score_data[index].score.win_loss_draws[0][2])
+                        latestWinsField.text(scoresData[index].score.winLossDraws[0][0])
+                        latestLossesField.text(scoresData[index].score.winLossDraws[0][1])
+                        latestDrawsField.text(scoresData[index].score.winLossDraws[0][2])
                         
-                        let total_wins_val = 0
-                        let total_losses_val = 0
-                        let total_draws_val = 0
-                        for(let i=0; i<score_data[index].score.win_loss_draws.length; i++) {
-                            total_wins_val += score_data[index].score.win_loss_draws[i][0]
-                            total_losses_val += score_data[index].score.win_loss_draws[i][1]
-                            total_draws_val += score_data[index].score.win_loss_draws[i][2]
+                        let totalWins = 0
+                        let totalLosses = 0
+                        let totalDraws = 0
+                        for(let i=0; i<scoresData[index].score.winLossDraws.length; i++) {
+                            totalWins += scoresData[index].score.winLossDraws[i][0]
+                            totalLosses += scoresData[index].score.winLossDraws[i][1]
+                            totalDraws += scoresData[index].score.winLossDraws[i][2]
                         }
     
-                        total_wins.text(total_wins_val)
-                        total_losses.text(total_losses_val)
-                        total_draws.text(total_draws_val)
+                        totalWinsField.text(totalWins)
+                        totalLossesField.text(totalLosses)
+                        totalDrawsField.text(totalDraws)
                     })
                 }
             })
@@ -77,7 +77,7 @@
             })
         })()
     }
-    setInterval(update_score, 1000)
+    setInterval(updateScore, 1000)
 
     function reflectPreference() { 
         (async () => {
@@ -89,24 +89,24 @@
                 if(preference !== undefined) {
                     // Alignment
                     if(!window.matchMedia('(max-height: 100px)').matches) {
-                        const alignment = preference['display']['alignment']['vertical']
-                        const alignment_value = //
+                        const alignment = preference.display.alignment.vertical
+                        const alignmentKeyword = //
                             (alignment == 'bottom') ? 'end' : 
                             (alignment == 'middle') ? 'center' : 'start'
-                        $('.scoreboard tbody').css('justify-content', alignment_value)
+                        $('.scoreboard tbody').css('justify-content', alignmentKeyword)
                     }
                     else {
-                        const alignment = preference['display']['alignment']['horizontal']
-                        const alignment_value = //
+                        const alignment = preference.display.alignment.horizontal
+                        const alignmentKeyword = //
                             (alignment == 'right') ? 'end' : 
                             (alignment == 'left') ? 'start' : 'center'
-                        $('.scoreboard tbody').css('justify-content', alignment_value)
+                        $('.scoreboard tbody').css('justify-content', alignmentKeyword)
                     }
     
                     // Inetrval time
-                    const interval_time = preference['display']['interval_time']
-                    if(1000 * interval_time['rank_badge_text'] != badgeAndTextInterval) {
-                        badgeAndTextInterval = 1000 * interval_time['rank_badge_text']
+                    const intervalTime = preference.display.intervalTime
+                    if(1000 * intervalTime.rankBadgeAndText != badgeAndTextInterval) {
+                        badgeAndTextInterval = 1000 * intervalTime.rankBadgeAndText
                         clearTimeout(badgeAndTextTimeoutId)
                         
                         if(badgeAndTextInterval == 0) {
@@ -118,8 +118,8 @@
                             badgeAndTextTimeoutId = setTimeout(cycleBadgeAndText, badgeAndTextInterval)
                         }
                     }
-                    if(1000 * interval_time['score_total_latest'] != totalAndLatestInterval) {
-                        totalAndLatestInterval = 1000 * interval_time['score_total_latest']
+                    if(1000 * intervalTime.scoreTotalAndLatest != totalAndLatestInterval) {
+                        totalAndLatestInterval = 1000 * intervalTime.scoreTotalAndLatest
                         clearTimeout(totalAndLatestTimeoutId)
     
                         if(totalAndLatestInterval == 0) {
@@ -134,11 +134,11 @@
 
                     // Background opacity
                     $('.scoreboard tr').each((index, elem) => {
-                        const color_str = $(elem).css('background-color')
-                        const rgb = color_str.match(/^rgba?\((\d+), (\d+), (\d+)(, [01](\.\d+)?)?\)$/)
-                        const alpha = preference['display']['background_opacity']
-                        const rgba_str = `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
-                        $(elem).css('background-color', rgba_str)
+                        const colorStr = $(elem).css('background-color')
+                        const rgb = colorStr.match(/^rgba?\((\d+), (\d+), (\d+)(, [01](\.\d+)?)?\)$/)
+                        const alpha = preference.display.backgroundOpacity
+                        const rgbaStr = `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
+                        $(elem).css('background-color', rgbaStr)
                     });
                 }
             })
