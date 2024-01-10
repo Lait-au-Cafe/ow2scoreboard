@@ -3,7 +3,6 @@
 import { app, protocol, Menu, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
-import { version } from 'os'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const fs = require('fs')
 const path = require('path')
@@ -81,6 +80,10 @@ function updateCacheFormat(cachedData) {
       }
     }
   }
+  else {
+    // Up to date
+    return cachedData
+  }
 
   return newCachedData
 }
@@ -91,12 +94,12 @@ try {
   cachedData = JSON.parse(fs.readFileSync(`${cacheDirPath}/${cacheFilename}`, 'utf8'))
   console.log(`Cache file found: ${cacheDirPath}/${cacheFilename}. `)
   log(`Cache file found: ${cacheDirPath}/${cacheFilename}. (version ${cachedData.version})`, 'INFO')
+  cachedData = updateCacheFormat(cachedData)
 }
 catch(err) {
   console.log("Cache file not found. ")
   log("Cache file not found. ", 'INFO')
 }
-cachedData = updateCacheFormat(cachedData)
 console.dir(cachedData, {depth: null})
 
 async function getAppVersion() {
