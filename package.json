@@ -1,6 +1,6 @@
 {
   "name": "ow2scoreboard",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "author": "Lait-au-Cafe",
   "description": "Scoreboard overlay for Overwatch2. ",
   "private": true,
@@ -8,8 +8,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "electron:build": "vue-cli-service electron:build",
-    "electron:serve": "vue-cli-service electron:serve",
+    "electron:build": "cross-env NODE_OPTIONS=--openssl-legacy-provider vue-cli-service electron:build",
+    "electron:serve": "cross-env NODE_OPTIONS=--openssl-legacy-provider vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },
@@ -26,6 +26,7 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "cross-env": "^10.1.0",
     "electron": "^13.0.0",
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^7.32.0",

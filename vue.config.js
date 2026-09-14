@@ -1,4 +1,7 @@
 const { defineConfig } = require('@vue/cli-service')
+
+delete process.env.NODE_OPTIONS;
+
 module.exports = defineConfig({
   transpileDependencies: true, 
   pluginOptions: {
