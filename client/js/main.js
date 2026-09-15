@@ -46,7 +46,7 @@
                         if(!scoresData[index].isVisible) { row.addClass('hidden') }
                         else { row.removeClass('hidden') }
                         
-                        badge.attr('src', `../assets/rank_badge/${scoresData[index].rank.currentTier}/${scoresData[index].rank.currentDivision}.png`)
+                        badge.attr('src', `../assets/rank_badge/${scoresData[index].rank.currentTier}/${scoresData[index].rank.currentDivision}.svg`)
                         
                         let tier
                         if(scoresData[index].rank.currentTier == 'grandmaster') { tier = 'GM' }

@@ -213,7 +213,7 @@ export default {
       scoreButtonsCooldown: false,
       selectedRole: "tank", 
       roles: initializeScores(), 
-      tiers: ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster'], 
+      tiers: ['bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'champion'], 
       divisions: [5, 4, 3, 2, 1], 
       preference: {
         display: {
@@ -238,7 +238,7 @@ export default {
   }, 
   methods: {
     imagePathBuilder: function(tier, division) {
-      return require(`../assets/rank_badge/${tier}/${division}.png`)
+      return require(`../assets/rank_badge/${tier}/${division}.svg`)
     },
     switchTab: function(role) {
       this.selectedRole = role
@@ -271,7 +271,7 @@ export default {
       else {
         if(tierIndex == 0) { return }
 
-        role.rank.current_tier = this.tiers[tierIndex - 1]
+        role.rank.currentTier = this.tiers[tierIndex - 1]
         role.rank.currentDivision = this.divisions[this.divisions.length - 1]
       }
     }, 
