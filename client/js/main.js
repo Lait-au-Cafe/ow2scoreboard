@@ -1,8 +1,11 @@
 'use strict'
 
-{
+;(async () => {
     console.log(window.navigator.userAgent);
 
+    //========================================
+    // Flipping
+    //========================================
     let badgeAndTextInterval = 10000
     function cycleBadgeAndText() {
         $('.badge').each((index, elem) => {
@@ -23,14 +26,71 @@
     }
     let totalAndLatestTimeoutId = setTimeout(cycleTotalAndLatest, totalAndLatestInterval)
 
+    //========================================
+    // Search active port
+    //========================================
+    const PORT_CANDIDATES = [58080, 58081, 58082, 58083, 58084]
+    const APP_IDENTIFIER = "ow2scoreboard"
+    const RETRY_INTERVAL_MS = 2000
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+    async function scanPortsOnce() {
+        for(const port of PORT_CANDIDATES) {
+            try {
+                // set timeout
+                const controller = new AbortController()
+                const timeoutId = setTimeout(() => controller.abort, 300)
+
+                const response = await fetch(`http://localhost:${port}/ping`, {
+                    signal: controller.signal
+                })
+                clearTimeout(timeoutId)
+
+                if(response.ok) {
+                    const data = await response.json()
+                    if(data.app === APP_IDENTIFIER) {
+                        return port
+                    }
+                }
+            }
+            catch(e) {
+                // connection failed or timeout
+                continue
+            }
+        }
+
+        return null
+    }
+
+    async function waitForServer() {
+        console.log("サーバーの起動を待機中...")
+
+        while(true) {
+            const activePort = await scanPortsOnce()
+            if(!!activePort) {
+                console.log(`サーバー検出: port ${activePort}`)
+                return activePort
+            }
+
+            await sleep(RETRY_INTERVAL_MS)
+        }
+    }
+
+    const activePort = await waitForServer()
+
+    //========================================
+    // data update (sync with controller)
+    //========================================    
     function updateScore() {
         (async () => {
-            const response = await fetch("http://localhost:3000/api/get_score", {
-              method: 'POST'
-            })
-            .then((response) => response.json())
-            .then((scoresData) => {
-                if(scoresData !== undefined) {
+            try {
+                const response = await fetch(`http://localhost:${activePort}/api/get_score`, {
+                    method: 'POST'
+                });
+                const text = await response.text()
+
+                if(text && text != "undefined") {
+                    const scoresData = JSON.parse(text)
                     const roles = ['tank', 'dps', 'support']
                     roles.forEach((role, index) => {
                         const row = $(`tr.${role}`)
@@ -70,23 +130,27 @@
                         totalLossesField.text(totalLosses)
                         totalDrawsField.text(totalDraws)
                     })
+
                 }
-            })
-            .catch(e => {
+            }
+            catch(e) {
               console.error(`Error occured while updating score data. \n=> ${e}`)
-            })
+            }
         })()
     }
     setInterval(updateScore, 1000)
 
     function reflectPreference() { 
         (async () => {
-            const response = await fetch("http://localhost:3000/api/get_preference", {
-              method: 'POST'
-            })
-            .then((response) => response.json())
-            .then((preference) => {
-                if(preference !== undefined) {
+            try {
+                const response = await fetch(`http://localhost:${activePort}/api/get_preference`, {
+                method: 'POST'
+                });
+                const text = await response.text()
+
+                if(text && text != "undefined") {
+                    const preference = JSON.parse(text)
+
                     // Alignment
                     if(!window.matchMedia('(max-height: 100px)').matches) {
                         const alignment = preference.display.alignment.vertical
@@ -141,11 +205,11 @@
                         $(elem).css('background-color', rgbaStr)
                     });
                 }
-            })
-            .catch(e => {
+            }
+            catch(e) {
               console.error(`Error occured while updating preference. \n=> ${e}`)
-            })
+            }
         })()
     }
     setInterval(reflectPreference, 1000)
-}
+})()

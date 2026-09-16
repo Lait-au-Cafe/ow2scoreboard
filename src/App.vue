@@ -147,10 +147,10 @@
 <script>
 
 // eslint-disable-next-line
-function updateScores(score) {
+function updateScores(port, score) {
   (async () => {
     // eslint-disable-next-line
-    const response = await fetch("http://localhost:3000/api/set_score", {
+    const response = await fetch(`http://localhost:${port}/api/set_score`, {
       method: 'POST', 
       headers: {
         'Content-Type': 'application/json'
@@ -167,10 +167,10 @@ function updateScores(score) {
 }
 
 // eslint-disable-next-line
-function updatePreference(preference) {
+function updatePreference(port, preference) {
   (async () => {
     // eslint-disable-next-line
-    const response = await fetch("http://localhost:3000/api/set_preference", {
+    const response = await fetch(`http://localhost:${port}/api/set_preference`, {
       method: 'POST', 
       headers: {
         'Content-Type': 'application/json'
@@ -228,6 +228,7 @@ export default {
           backgroundOpacity: 1.0, 
         }, 
       },
+      serverPort: null,
     }
   }, 
   computed: {
@@ -323,14 +324,14 @@ export default {
     roles: {
       // eslint-disable-next-line
       handler: function(new_value, old_value) {
-        updateScores(new_value)
+        updateScores(this.serverPort, new_value)
       }, 
       deep: true, 
     }, 
     preference: {
       // eslint-disable-next-line
       handler: function(new_value, old_value) {
-        updatePreference(new_value)
+        updatePreference(this.serverPort, new_value)
       }, 
       deep: true, 
     }, 
@@ -355,6 +356,8 @@ export default {
     });
 
     (async () => {
+      this.serverPort = await window.electronAPI.getServerPort()
+
       // Retrieve scores. 
       const retrievedScores = await window.electronAPI.retrieveScores()
       if(retrievedScores !== undefined) { this.roles = retrievedScores }

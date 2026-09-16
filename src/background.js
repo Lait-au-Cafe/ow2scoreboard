@@ -16,6 +16,9 @@ catch(err) {
   else { console.log(err) }
 }
 
+//========================================
+// Log
+//========================================
 const logFilename = "log.txt"
 function log(msg, type) {
   const currentTime = new Date()
@@ -32,6 +35,9 @@ function log(msg, type) {
 }
 fs.writeFileSync(`${cacheDirPath}/${logFilename}`, "")
 
+//========================================
+// Cache
+//========================================
 function isVersionLessThan(target, reference) {
   let targetNumbers = target.split('.')
   let referenceNumbers = reference.split('.')
@@ -102,6 +108,9 @@ catch(err) {
 }
 console.dir(cachedData, {depth: null})
 
+//========================================
+// 
+//========================================
 async function getAppVersion() {
   return app.getVersion()
 }
@@ -147,6 +156,87 @@ async function retrievePreference() {
   return undefined
 }
 
+//========================================
+// Prepare http server
+//========================================
+const express = require('express')
+const expressApp = express()
+
+const cors = require('cors')
+// const corsOptions = {
+//   origin: 'http://localhost:8080'
+// }
+
+expressApp.use(express.json())
+expressApp.use(cors())
+
+
+const APP_IDENTIFIER = "ow2scoreboard"
+expressApp.get('/ping', (req, res) => {
+  res.json({ app: APP_IDENTIFIER, status: 'ok' })
+})
+
+let currentScoresData = undefined
+let currentPreferenceData = undefined
+
+expressApp.post('/api/get_score', (req, res) => {
+  res.json(currentScoresData)
+})
+expressApp.post('/api/set_score', (req, res) => {
+  currentScoresData = req.body
+  res.setHeader('Content-Type', 'text/html')
+  res.send("OK")
+})
+
+expressApp.post('/api/get_preference', (req, res) => {
+  res.json(currentPreferenceData)
+})
+expressApp.post('/api/set_preference', (req, res) => {
+  currentPreferenceData = req.body
+  res.setHeader('Content-Type', 'text/html')
+  res.send("OK")
+})
+
+
+const PORT_CANDIDATES = [58080, 58081, 58082, 58083, 58084]
+
+function startServer(ports) {
+  return new Promise((resolve, reject) => {
+    function tryListen(candidates) {
+      if(ports.length === 0) {
+        const err = new Error("Failed to start server. All candidate ports are used.")
+        log(err.message, 'ERROR')
+        return reject(err)
+      }
+
+      const port = candidates[0]
+      const server = expressApp.listen(port, () => {
+        console.log(`Listening on port ${port}. `)
+        log(`Listening on port ${port}. `, 'INFO')
+        resolve(port)
+      })
+
+      server.on('error', (err) => {
+        if(err.code === 'EADDRINUSE') {
+          console.log(`Port ${port} is already in use. `)
+          log(`Port ${port} is already in use. `, 'INFO')
+
+          tryListen(candidates.slice(1))
+        }
+        else {
+          log("Unexpected error occured while starting a server. ", 'ERROR')
+          reject(err)
+        }
+      })
+    }
+
+    tryListen(ports)
+  })
+}
+
+//========================================
+// UI
+//========================================
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -219,6 +309,16 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
+
+  let activeServerPort = null
+  try {
+    activeServerPort = await startServer(PORT_CANDIDATES)
+  } catch (err) {
+    console.error('Failed to start a server:', err)
+    log(`Failed to start a server: ${err}`, 'ERROR')
+  }
+
+  ipcMain.handle('getServerPort', () => activeServerPort)
   ipcMain.handle('retrieveScores', retrieveScores)
   ipcMain.handle('retrievePreference', retrievePreference)
   ipcMain.handle('getAppVersion', getAppVersion)
@@ -239,41 +339,3 @@ if (isDevelopment) {
     })
   }
 }
-
-let currentScoresData = undefined
-let currentPreferenceData = undefined
-
-// Launch http server
-const express = require('express')
-const expressApp = express()
-
-const cors = require('cors')
-// const corsOptions = {
-//   origin: 'http://localhost:8080'
-// }
-
-expressApp.use(express.json())
-expressApp.use(cors())
-
-expressApp.post('/api/get_score', (req, res) => {
-  res.json(currentScoresData)
-})
-expressApp.post('/api/set_score', (req, res) => {
-  currentScoresData = req.body
-  res.setHeader('Content-Type', 'text/html')
-  res.send("OK")
-})
-
-expressApp.post('/api/get_preference', (req, res) => {
-  res.json(currentPreferenceData)
-})
-expressApp.post('/api/set_preference', (req, res) => {
-  currentPreferenceData = req.body
-  res.setHeader('Content-Type', 'text/html')
-  res.send("OK")
-})
-
-expressApp.listen(3000, () => {
-  console.log("Listening on port 3000. ")
-  log("Listening on port 3000. ", 'INFO')
-});
